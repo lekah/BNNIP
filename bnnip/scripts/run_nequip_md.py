@@ -11,7 +11,8 @@ from bnnip.model.nequip_model import NequipModel
 
 import torch
 
-def main(dt, mass, model_parameters, model_config, nsteps):
+def main(dt, mass, model_parameters, model_config, nsteps, freq_save,
+        model_dir=None):
     config = Config.from_file(model_config)
     dataset = dataset_from_config(config)
     saved_state_dict = torch.load(model_parameters)
@@ -41,7 +42,7 @@ def main(dt, mass, model_parameters, model_config, nsteps):
     hd = HamiltonianDynamics(mass=mass, dt=dt, model=model)
     hd.init_dynamics(batch)
 
-    hd.run(nsteps)
+    hd.run(nsteps, save_model_freq=freq_save, model_dir=model_dir)
 
 
 if __name__ == '__main__':
@@ -53,5 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--dt',  help='time step', type=float, default=1e-2)
 
     parser.add_argument('-n', '--nsteps', type=int, help='number of steps')
+    parser.add_argument('-f', '--freq-save', type=int, help='save model every N steps')
+    parser.add_argument('--model-dir',  help='save model in this folder')
     parsed = parser.parse_args()
     main(**vars(parsed))

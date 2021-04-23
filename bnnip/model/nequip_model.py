@@ -37,3 +37,5 @@ class NequipModel(AbstractModel):
     def parameters(self):
         return self._trainer.model.parameters()
 
+    def state_dict(self):
+        return self._trainer.model.state_dict()

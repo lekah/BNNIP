@@ -1,6 +1,4 @@
-import copy
-
-import numpy as np
+import copy, os, numpy as np
 
 import torch
 
@@ -110,11 +108,11 @@ class HamiltonianDynamics(object):
     def print_quantities(self,):
         print(self._loss, self._kin, self._loss + self._kin)
 
-    def run(self, nsteps, save_model_freq=-1, print_freq=1,
+    def run(self, nsteps, save_model_freq=None, print_freq=1,
             model_dir=None):
         """
         Runs nsteps steps of the dynamics. Saves intermediate models to model_dir
-        every save_model_freq steps (-1 to never save).
+        every save_model_freq steps (-1 or None to never save).
         Saves every print_freq the loss, kinetic energy, total energy and temperature
         to file.
         """
@@ -122,8 +120,21 @@ class HamiltonianDynamics(object):
         # ~ if print_file is None:
             # ~ print_file = 'run.log'
         # ~ with open(print_file, 'a') as f:
-        for istep in range(nsteps):
+        
+        if save_model_freq is not None and save_model_freq > 0:
+            if model_dir is None:
+                model_dir = '.'
+            os.makedirs(model_dir, exist_ok=True)
+            len_max_step = len(str(nsteps))
+            save_models = True
+        else:
+            save_models = False
+        for istep in range(1, nsteps+1):
             ret = self.step()
             if istep % print_freq == 0:
                 loss, ekin, etot,  temp = ret
                 print('{:<5} {:.6f} {:.6f} {:.6f} {:.6f}'.format(istep, *ret))
+            if save_models and (istep % save_model_freq == 0):
+                len_istep = len(str(istep))
+                self.save_model(os.path.join(model_dir or '.', 'model-{}{}.pt'.format(
+                    '0'*(len_max_step-len_istep), istep)))
