@@ -3,8 +3,14 @@ import copy, os, numpy as np
 import torch
 
 from torch.nn.utils import parameters_to_vector, vector_to_parameters
-
 from bnnip.model import AbstractModel
+from bnnip.utils import AttributeDict
+
+
+TEMP_CONTROLS = AttributeDict(
+        LANGEVIN='langevin',
+        ANDERSEN='andersen',
+    )
 
 class HamiltonianDynamics(object):
     def __init__(self, model, mass, dt, gamma=0.0, 
@@ -33,7 +39,7 @@ class HamiltonianDynamics(object):
             assert target_temperature is not None, "No temperature set"
             self._target_temperature = target_temperature
             self._V = self._create_velocities(self._ndeg)
-            if self._tempcontrol == 'langevin':
+            if self._tempcontrol == TEMP_CONTROLS.LANGEVIN:
                 try:
                     self._gamma = float(gamma)
                     if self._gamma < 0 or self._gamma > 1:
@@ -42,7 +48,7 @@ class HamiltonianDynamics(object):
                     raise ValueError("Gamma has to be a number between 0 and 1")
                 self._langevin_factor = np.sqrt(
                         2*self._gamma * self._target_temperature / self._mass / self._dt)
-            elif self._tempcontrol == 'andersen':
+            elif self._tempcontrol == TEMP_CONTROLS.ANDERSEN:
                 try:
                     self._tau = float(tau)
                     if self._tau < 0:
@@ -50,7 +56,7 @@ class HamiltonianDynamics(object):
                 except Exception:
                     raise ValueError("Tau has to be a positive number")
             else:
-                raise ValueError("Unknown theremostat type {}".format(self._tempcontrol))
+                raise ValueError("Unknown thermostat type {}".format(self._tempcontrol))
         self._calculate_kinetic_energy_temp()
         self._calculate_force()
 

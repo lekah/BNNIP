@@ -1,5 +1,6 @@
-from nequip.data import Collater, AtomicDataDict
 
+
+from nequip.data import AtomicDataDict
 from nequip.nn import RescaleOutput
 from nequip.utils import Config
 from nequip.utils import dataset_from_config
@@ -7,7 +8,7 @@ from nequip.models import EnergyModel, ForceModel
 from nequip.train.trainer import Trainer
 
 from bnnip.explore.hamiltonian_dynamics import HamiltonianDynamics
-from bnnip.model.nequip_model import NequipModel
+from bnnip.model.nequip_model import NequipModel, NequipData
 
 import torch
 
@@ -20,7 +21,8 @@ def main(dt, mass, model_parameters, model_config, nsteps, freq_save,
     trainer.set_dataset(dataset)
     ((forces_std), (energies_mean, energies_std), (allowed_species, Z_count),
         ) = trainer.dataset_train.statistics(fields=[
-            AtomicDataDict.FORCE_KEY, AtomicDataDict.TOTAL_ENERGY_KEY, AtomicDataDict.ATOMIC_NUMBERS_KEY,],
+            AtomicDataDict.FORCE_KEY, AtomicDataDict.TOTAL_ENERGY_KEY,
+            AtomicDataDict.ATOMIC_NUMBERS_KEY,],
         modes=["rms", "mean_std", "count"],)
 
     energy_model = EnergyModel(**dict(config))
@@ -34,10 +36,9 @@ def main(dt, mass, model_parameters, model_config, nsteps, freq_save,
     core_model.load_state_dict(saved_state_dict)
     trainer.model = core_model
     trainer.init()
+    data = NequipData(dataset)
+    batch = data.get_batch()
     model = NequipModel(trainer)
-
-    c = Collater.for_dataset(dataset, exclude_keys=[])
-    batch = c([dataset.get(i) for i in range(10)])
 
     hd = HamiltonianDynamics(mass=mass, dt=dt, model=model)
     hd.init_dynamics(batch)

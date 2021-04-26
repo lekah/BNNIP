@@ -1,6 +1,21 @@
 import torch
 from torch.nn.utils.convert_parameters import _check_param_device
 
+class AttributeDict(dict):
+    """
+    Utility to allow ad.foo to access values inside dictionary
+    """
+    def __getattr__(self, attr):
+        return self[attr]
+    def __setattr__(self, attr, value):
+        self[attr] = value
+
+class PositiveInt(int):
+    def __init__(self, value):
+        value = int(value)
+        if value < 1:
+            raise ValueError("You have to provide a positive integer")
+        self(PositiveInt, self).__init__(value)
 
 
 def parameters_gradients_to_vector(parameters):

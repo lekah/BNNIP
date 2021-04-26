@@ -1,11 +1,30 @@
 
 from nequip.train.trainer import Trainer
-from nequip.data import AtomicDataDict, AtomicData
+from nequip.data import AtomicDataDict, AtomicData, Collater
 from bnnip.model import AbstractModel
 from bnnip.utils import zero_grad, parameters_gradients_to_vector
 
 
-
+class NequipData(object):
+    def __init__(self, dataset):
+        # TODO: assert dataset
+        self._dataset = dataset
+        self._collater = Collater.for_dataset(dataset, exclude_keys=[])
+        self._N = len(self._dataset)
+        super(NequipData, self).__init__()
+    def get_batch(self, indices=None):
+        if indices is None:
+            indices_ = range(self._N)
+        elif isinstance(indices, int):
+            indices_ = [indices]
+        elif isinstance(indinces, (tuple, list, set)):
+            indices_ = [int(i) for i in indices]
+        else:
+            raise TypeError("Invalid type for indices")
+        batch = self._collater([self._dataset.get(i) for i in indices_])
+        return batch
+    def get_rand_batch(self, n):
+        if not isinstance(n, int):
 
 class NequipModel(AbstractModel):
     def __init__(self, trainer):
