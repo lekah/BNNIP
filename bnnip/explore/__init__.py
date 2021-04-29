@@ -1,7 +1,8 @@
 import os
+from abc import ABCMeta, abstractmethod
 
 
-class Sampler(object):
+class Sampler(metaclass=ABCMeta):
     def __init__(self, model, mass, verbosity=0):
         # TODO: checks
         if not isinstance(mass, float):
@@ -13,6 +14,12 @@ class Sampler(object):
     @property
     def model(self):
         return self._model
+    @abstractmethod
+    def step(self):
+        """
+        Run a single step of the sampler
+        """
+        pass
 
     def set_model(self, model):
         # TODO:checks
@@ -46,3 +53,17 @@ class Sampler(object):
                 len_istep = len(str(istep))
                 self.save_model(os.path.join(model_dir or '.', 'model-{}{}.pt'.format(
                     '0'*(len_max_step-len_istep), istep)))
+
+    def get_model(self):
+        try:
+            # The model needs to have the implementation to copy/deepcopy
+            # for this to work:
+            return copy.deepcopy(self._model)
+        except:
+            raise NotImplemented("Building a model has not been "
+                                 "implemented")
+            # TODO Build model old school
+
+    def save_model(self, filename):
+        torch.save(self._model.state_dict(),
+                   filename if filename.endswith('.pt') else filename+'.pt')

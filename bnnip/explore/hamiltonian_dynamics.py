@@ -126,19 +126,6 @@ class HamiltonianDynamics(Sampler):
         self._calculate_kinetic_energy_temp()
         return ret_val
 
-    def get_model(self):
-        try:
-            # The model needs to have the implementation to copy/deepcopy
-            # for this to work:
-            return copy.deepcopy(self._model)
-        except:
-            raise NotImplemented("Building a model has not been "
-                                 "implemented")
-            # TODO Build model old school
-
-    def save_model(self, filename):
-        torch.save(self._model.state_dict(),
-                   filename if filename.endswith('.pt') else filename+'.pt')
 
     def print_quantities(self,):
         print(self._loss, self._kin, self._loss + self._kin)
