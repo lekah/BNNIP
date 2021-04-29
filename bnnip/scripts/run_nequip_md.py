@@ -1,5 +1,4 @@
 
-
 from nequip.data import AtomicDataDict
 from nequip.nn import RescaleOutput
 from nequip.utils import Config
@@ -13,7 +12,7 @@ from bnnip.model.nequip_model import NequipModel, NequipData
 import torch
 
 def main(dt, mass, model_parameters, model_config, nsteps, freq_save,
-        model_dir=None):
+        model_dir=None, batch_size=100):
     config = Config.from_file(model_config)
     dataset = dataset_from_config(config)
     saved_state_dict = torch.load(model_parameters)
@@ -37,7 +36,7 @@ def main(dt, mass, model_parameters, model_config, nsteps, freq_save,
     trainer.model = core_model
     trainer.init()
     data = NequipData(dataset)
-    batch = data.get_batch()
+    batch = data.get_rand_batch(batch_size)
     model = NequipModel(trainer)
 
     hd = HamiltonianDynamics(mass=mass, dt=dt, model=model)
@@ -55,6 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--dt',  help='time step', type=float, default=1e-2)
 
     parser.add_argument('-n', '--nsteps', type=int, help='number of steps')
+    parser.add_argument('-b', '--batch-size', type=int, help='size of batch', default=100)
     parser.add_argument('-f', '--freq-save', type=int, help='save model every N steps')
     parser.add_argument('--model-dir',  help='save model in this folder')
     parsed = parser.parse_args()
