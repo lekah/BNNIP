@@ -1,4 +1,6 @@
-import copy, os, numpy as np
+import copy
+import os
+import numpy as np
 
 import torch
 
@@ -10,12 +12,13 @@ from bnnip.utils import AttributeDict
 
 
 TEMP_CONTROLS = AttributeDict(
-        LANGEVIN='langevin',
-        ANDERSEN='andersen',
-    )
+    LANGEVIN='langevin',
+    ANDERSEN='andersen',
+)
+
 
 class HamiltonianDynamics(Sampler):
-    def __init__(self, model, mass, dt, gamma=0.0, 
+    def __init__(self, model, mass, dt, gamma=0.0,
                  target_temperature=None, temp_control=None,
                  tau=None,):
 
@@ -24,7 +27,8 @@ class HamiltonianDynamics(Sampler):
         self._tempcontrol = temp_control
         self._target_temperature = target_temperature
         if not isinstance(model, AbstractModel):
-            raise TypeError("Model has to inherit frmo bnnip.model.AbstractModel")
+            raise TypeError(
+                "Model has to inherit frmo bnnip.model.AbstractModel")
         super(HamiltonianDynamics, self).__init__(model=model, mass=mass)
 
     def init_dynamics(self, batch):
@@ -38,7 +42,7 @@ class HamiltonianDynamics(Sampler):
         self._ndeg = self._W.shape[0]
 
         if self._tempcontrol is None:
-            self._V  = self._W.new_zeros(size=self._W.shape)
+            self._V = self._W.new_zeros(size=self._W.shape)
         else:
             assert target_temperature is not None, "No temperature set"
             self._target_temperature = target_temperature
@@ -49,9 +53,10 @@ class HamiltonianDynamics(Sampler):
                     if self._gamma < 0 or self._gamma > 1:
                         raise
                 except Exception:
-                    raise ValueError("Gamma has to be a number between 0 and 1")
+                    raise ValueError(
+                        "Gamma has to be a number between 0 and 1")
                 self._langevin_factor = np.sqrt(
-                        2*self._gamma * self._target_temperature / self._mass / self._dt)
+                    2*self._gamma * self._target_temperature / self._mass / self._dt)
             elif self._tempcontrol == TEMP_CONTROLS.ANDERSEN:
                 try:
                     self._tau = float(tau)
@@ -60,7 +65,8 @@ class HamiltonianDynamics(Sampler):
                 except Exception:
                     raise ValueError("Tau has to be a positive number")
             else:
-                raise ValueError("Unknown thermostat type {}".format(self._tempcontrol))
+                raise ValueError(
+                    "Unknown thermostat type {}".format(self._tempcontrol))
         self._calculate_kinetic_energy_temp()
         self._calculate_force()
 
@@ -82,39 +88,39 @@ class HamiltonianDynamics(Sampler):
         if temperature is None:
             if self._target_temperature is None:
                 raise ValueError("Provide a temperature to this function"
-                    " or set target_temperature")
+                                 " or set target_temperature")
             else:
                 temperature = self._target_temperature
-        return torch.normal(mean=torch.zeros(size), 
-                        std=np.sqrt(temperature/self._mass) * torch.ones(size))
+        return torch.normal(mean=torch.zeros(size),
+                            std=np.sqrt(temperature/self._mass) * torch.ones(size))
 
     def set_boltzmann_velocities(self, temperature):
         self._V = self._create_velocities(size=self._ndeg,
-                temperature=temperature)
+                                          temperature=temperature)
         return self._calculate_kinetic_energy_temp()
 
     def _calculate_force(self):
         res = self._model.forward_backward(self._expl_data)
         self._F = - res['gradW']
         self._loss = res['loss'].item()
-        
+
     def step(self):
         ret_val = (self._loss, self._kin, self._loss+self._kin, self._temp)
         acc = self._F / self._mass
         if self._tempcontrol == 'langevin':
             acc = acc - self._gamma * self._V + (
                 self._langevin_factor * torch.normal(
-                        mean=torch.zeros(self._ndeg), std=torch.ones(self._ndeg)) )
-        self._W += (self._V * self._dt + 0.5 * acc * self._dt2 )
+                    mean=torch.zeros(self._ndeg), std=torch.ones(self._ndeg)))
+        self._W += (self._V * self._dt + 0.5 * acc * self._dt2)
         vector_to_parameters(self._W, self._model.parameters())
         old_F = self._F.clone().detach()
         # calculating forces in new positions
         self._calculate_force()
         acc = (old_F + self._F) / self._mass
-        self._V += 0.5 *  acc * self._dt
+        self._V += 0.5 * acc * self._dt
         if self._tempcontrol == 'andersen':
             rand = torch.rand(size=(self._ndeg,))
-            msk = rand < self._tau/ self._dt
+            msk = rand < self._tau / self._dt
             self._V[msk] = self._create_velocities(msk.sum())
         self._calculate_kinetic_energy_temp()
         return ret_val
@@ -126,11 +132,13 @@ class HamiltonianDynamics(Sampler):
             return copy.deepcopy(self._model)
         except:
             raise NotImplemented("Building a model has not been "
-                "implemented")
+                                 "implemented")
             # TODO Build model old school
+
     def save_model(self, filename):
         torch.save(self._model.state_dict(),
-                filename if filename.endswith('.pt') else filename+'.pt')
+                   filename if filename.endswith('.pt') else filename+'.pt')
+
     def print_quantities(self,):
         print(self._loss, self._kin, self._loss + self._kin)
 
@@ -144,9 +152,9 @@ class HamiltonianDynamics(Sampler):
         """
 
         # ~ if print_file is None:
-            # ~ print_file = 'run.log'
+        # ~ print_file = 'run.log'
         # ~ with open(print_file, 'a') as f:
-        
+
         if save_model_freq is not None and save_model_freq > 0:
             if model_dir is None:
                 model_dir = '.'

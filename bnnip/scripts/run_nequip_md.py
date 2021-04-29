@@ -11,25 +11,26 @@ from bnnip.model.nequip_model import NequipModel, NequipData
 
 import torch
 
+
 def main(dt, mass, model_parameters, model_config, nsteps, freq_save,
-        model_dir=None, batch_size=100):
+         model_dir=None, batch_size=100):
     config = Config.from_file(model_config)
     dataset = dataset_from_config(config)
     saved_state_dict = torch.load(model_parameters)
     trainer = Trainer(model=None, **dict(config))
     trainer.set_dataset(dataset)
     ((forces_std), (energies_mean, energies_std), (allowed_species, Z_count),
-        ) = trainer.dataset_train.statistics(fields=[
-            AtomicDataDict.FORCE_KEY, AtomicDataDict.TOTAL_ENERGY_KEY,
-            AtomicDataDict.ATOMIC_NUMBERS_KEY,],
+     ) = trainer.dataset_train.statistics(fields=[
+         AtomicDataDict.FORCE_KEY, AtomicDataDict.TOTAL_ENERGY_KEY,
+         AtomicDataDict.ATOMIC_NUMBERS_KEY, ],
         modes=["rms", "mean_std", "count"],)
 
     energy_model = EnergyModel(**dict(config))
     force_model = ForceModel(energy_model)
     core_model = RescaleOutput(
-        model=force_model, scale_keys=[AtomicDataDict.FORCE_KEY, 
-                                       AtomicDataDict.TOTAL_ENERGY_KEY,],
-        scale_by=forces_std, shift_keys=AtomicDataDict.TOTAL_ENERGY_KEY, 
+        model=force_model, scale_keys=[AtomicDataDict.FORCE_KEY,
+                                       AtomicDataDict.TOTAL_ENERGY_KEY, ],
+        scale_by=forces_std, shift_keys=AtomicDataDict.TOTAL_ENERGY_KEY,
         shift_by=energies_mean,)
     # core_model = force_model
     core_model.load_state_dict(saved_state_dict)
@@ -48,14 +49,18 @@ def main(dt, mass, model_parameters, model_config, nsteps, freq_save,
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument('-m', '--model-parameters', required=True, help='path to saved model parameters')
-    parser.add_argument('-c', '--model-config', required=True, help='path to model configuration (yaml)')
+    parser.add_argument('-m', '--model-parameters',
+                        required=True, help='path to saved model parameters')
+    parser.add_argument('-c', '--model-config', required=True,
+                        help='path to model configuration (yaml)')
     parser.add_argument('--mass',  help='mass', type=float, default=1.0)
     parser.add_argument('--dt',  help='time step', type=float, default=1e-2)
 
     parser.add_argument('-n', '--nsteps', type=int, help='number of steps')
-    parser.add_argument('-b', '--batch-size', type=int, help='size of batch', default=100)
-    parser.add_argument('-f', '--freq-save', type=int, help='save model every N steps')
+    parser.add_argument('-b', '--batch-size', type=int,
+                        help='size of batch', default=100)
+    parser.add_argument('-f', '--freq-save', type=int,
+                        help='save model every N steps')
     parser.add_argument('--model-dir',  help='save model in this folder')
     parsed = parser.parse_args()
     main(**vars(parsed))

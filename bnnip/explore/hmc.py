@@ -1,5 +1,6 @@
 
-import copy, torch
+import copy
+import torch
 from bnnip.explore import Sampler
 from bnnip.explore.hamiltonian_dynamics import HamiltonianDynamics
 from bnnip.model import AbstractData
@@ -15,10 +16,11 @@ CHECK_FREQ = 10
 class BadIntegrationError(Exception):
     pass
 
+
 class HMC(Sampler):
     def __init__(self, model, mass=1.0, start_dt=1e-2, start_L=100,
-                temperature=1.0, hd_batch_size=100,
-                stability_criterion=1e-2, l_adaptation_factor=0.1):
+                 temperature=1.0, hd_batch_size=100,
+                 stability_criterion=1e-2, l_adaptation_factor=0.1):
         self._dt = float(start_dt)
         self._L = int(start_L)
         self._temperature = float(temperature)
@@ -30,7 +32,7 @@ class HMC(Sampler):
     def init_mc(self, data):
         if not isinstance(data, AbstractData):
             raise TypeError("Data has to be an instance of a subclass"
-                    " of AbstractData")
+                            " of AbstractData")
         self._data = data
         full_batch = self._data.get_batch()
         self._full_atomic_data = self._model.prepare_batch(full_batch)
@@ -42,17 +44,18 @@ class HMC(Sampler):
     def _check_variances(self, var_loss, var_tot):
         if var_tot/var_loss > self._stability_criterion:
             raise BadIntegrationError("Var loss:{:.4e} Var loss+kin:{:.4e}".format(
-                    var_loss, var_tot))
+                var_loss, var_tot))
 
     def _perform_run(self, nsteps):
         retdict = {}
         hd = HamiltonianDynamics(copy.deepcopy(self._model), self._mass,
-                dt=self._dt, target_temperature=None, temp_control=None,)
+                                 dt=self._dt, target_temperature=None, temp_control=None,)
         # Setting the batch as a stochastic choice
         batch = self._data.get_rand_batch(self._hd_batch_size)
         hd.init_dynamics(batch)
         # setting velocities
-        retdict['initial_kin'] = hd.set_boltzmann_velocities(self._temperature)['kin']
+        retdict['initial_kin'] = hd.set_boltzmann_velocities(self._temperature)[
+            'kin']
         wf_loss = WelfordMeanM2()
         wf_tot = WelfordMeanM2()
         print_freq = int(nsteps/10)
@@ -60,7 +63,7 @@ class HMC(Sampler):
             loss, kin, tot, temp = hd.step()
             if istep % print_freq == 0:
                 print('{:<5} {:.6f} {:.6f} {:.6f} {:.6f}'.format(istep,
-                    loss, kin, tot, temp))
+                                                                 loss, kin, tot, temp))
             wf_loss.update(loss)
             wf_tot.update(tot)
             if istep % CHECK_FREQ == 0:
@@ -75,6 +78,7 @@ class HMC(Sampler):
         self._dt = factor*self._dt
         # also changing length of trajectory to compensate changed timestep
         self._L = int(self._L / factor)
+
     def step(self):
         """
         Runs a single step of HMC:
@@ -101,13 +105,13 @@ class HMC(Sampler):
                     break
                 except BadIntegrationError as e:
                     print("Caught BadIntegrationError: {}\n"
-                            "Reducing dt {:.2e} -> {:.2e}".format(e,
-                                self._dt, DT_REDUCTION*self._dt))
+                          "Reducing dt {:.2e} -> {:.2e}".format(e,
+                                                                self._dt, DT_REDUCTION*self._dt))
                     self._adapt_dt_L(DT_REDUCTION)
                     continue
                 except ZeroDivisionError as e:
                     print("Non recoverable ZeroDivisionError, loss"
-                        " is stable but loss+kin varies")
+                          " is stable but loss+kin varies")
                     raise e
 
             if not successful_hd:
@@ -117,19 +121,19 @@ class HMC(Sampler):
             # p = min(1, exp(- (H(q*,p*) - H(q,p))))
             #   = min(1, exp(H(q,p) - H(q*,p*)))
             # ~ print(previous_loss, retdict['initial_kin'], final_loss + retdict['final_kin'])
-            prop = torch.exp( ((previous_loss + retdict['initial_kin']) -
-                            (final_loss + retdict['final_kin'])) / self._temperature)
+            prop = torch.exp(((previous_loss + retdict['initial_kin']) -
+                              (final_loss + retdict['final_kin'])) / self._temperature)
             r = torch.rand(size=(1,))[0]
             print('!Evaluating model!\n'
-                    'Previous loss and kinetic: {}+{}={}\n'
-                    'Current loss and kinetic: {}+{}={}\n'
-                    'propability of acceptance is: {:.3f}\n'
-                    'Random number drawn: {:.3f}'.format(
-                    previous_loss.item(), retdict['initial_kin'],
-                    previous_loss + retdict['initial_kin'],
-                    final_loss.item(), retdict['final_kin'],
-                    final_loss + retdict['final_kin'],
-                    prop.item(), r.item()))
+                  'Previous loss and kinetic: {}+{}={}\n'
+                  'Current loss and kinetic: {}+{}={}\n'
+                  'propability of acceptance is: {:.3f}\n'
+                  'Random number drawn: {:.3f}'.format(
+                      previous_loss.item(), retdict['initial_kin'],
+                      previous_loss + retdict['initial_kin'],
+                      final_loss.item(), retdict['final_kin'],
+                      final_loss + retdict['final_kin'],
+                      prop.item(), r.item()))
             if prop > r:
                 successful_step = True
                 self._full_loss = final_loss
@@ -146,4 +150,4 @@ class HMC(Sampler):
             pass
         else:
             raise RuntimeError("Max attempts surpassed, "
-                    "could not obtain new model")
+                               "could not obtain new model")

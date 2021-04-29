@@ -12,8 +12,10 @@ class NequipData(AbstractData):
         self._dataset = dataset
         self._collater = Collater.for_dataset(dataset, exclude_keys=[])
         super(NequipData, self).__init__()
+
     def __len__(self):
         return len(self._dataset)
+
     def get_batch(self, indices=None):
         if indices is None:
             indices_ = range(len(self))
@@ -25,6 +27,7 @@ class NequipData(AbstractData):
             raise TypeError("Invalid type for indices")
         batch = self._collater([self._dataset.get(i) for i in indices_])
         return batch
+
 
 class NequipModel(AbstractModel):
     def __init__(self, trainer):
@@ -43,7 +46,7 @@ class NequipModel(AbstractModel):
             # this will normalize the targets
             # in validation (eval mode), it does nothing
             # in train mode, if normalizes the targets
-            atomic_data_dict  = self._trainer.model.unscale(atomic_data_dict)
+            atomic_data_dict = self._trainer.model.unscale(atomic_data_dict)
         return atomic_data_dict
 
     def train(self):
@@ -56,7 +59,7 @@ class NequipModel(AbstractModel):
         # ~ self._trainer.model.eval()
         pred = self._trainer.model(atomic_data_dict)
         loss, loss_contrib = self._trainer.loss(pred=pred,
-                ref=atomic_data_dict)
+                                                ref=atomic_data_dict)
         return dict(loss=loss, pred=pred)
 
     def forward_backward(self, atomic_data_dict):
@@ -65,10 +68,12 @@ class NequipModel(AbstractModel):
         # ~ self._trainer.model.train()
         pred = self._trainer.model(atomic_data_dict)
         loss, loss_contrib = self._trainer.loss(pred=pred,
-                ref=atomic_data_dict)
+                                                ref=atomic_data_dict)
         loss.backward()
-        W, gradW = parameters_gradients_to_vector(self._trainer.model.parameters())
+        W, gradW = parameters_gradients_to_vector(
+            self._trainer.model.parameters())
         return dict(loss=loss, W=W, gradW=gradW, pred=pred)
+
     def parameters(self):
         return self._trainer.model.parameters()
 
