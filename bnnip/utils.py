@@ -44,9 +44,7 @@ class WelfordMeanM2:
         if self._count < 2:
             return float("nan")
         else:
-            (mean, variance, sampleVariance) = (self._mean,
-                                                self._M2 / self._count, self._M2 / (self._count - 1))
-            return (mean, variance, sampleVariance)
+            return self._mean, self._M2/self._count
 
 
 def parameters_gradients_to_vector(parameters):
