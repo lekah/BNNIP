@@ -36,7 +36,7 @@ class AbstractModel(metaclass=ABCMeta):
     @abstractmethod
     def forward(self, batch):
         """
-        Runs forward , returns dictionary with loss
+        Runs forward, returns dictionary with loss
         """
         pass
 

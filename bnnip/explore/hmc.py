@@ -49,7 +49,8 @@ class HMC(Sampler):
     def _perform_run(self, nsteps):
         retdict = {}
         hd = HamiltonianDynamics(copy.deepcopy(self._model), self._mass,
-                                 dt=self._dt, target_temperature=None, temp_control=None,)
+                                 dt=self._dt, target_temperature=None,
+                                 temp_control=None,)
         # Setting the batch as a stochastic choice
         batch = self._data.get_rand_batch(self._hd_batch_size)
         hd.init_dynamics(batch)
@@ -105,8 +106,8 @@ class HMC(Sampler):
                     break
                 except BadIntegrationError as e:
                     print("Caught BadIntegrationError: {}\n"
-                          "Reducing dt {:.2e} -> {:.2e}".format(e,
-                                                                self._dt, DT_REDUCTION*self._dt))
+                          "Reducing dt {:.2e} -> "
+                          "{:.2e}".format(e, self._dt, DT_REDUCTION*self._dt))
                     self._adapt_dt_L(DT_REDUCTION)
                     continue
                 except ZeroDivisionError as e:
@@ -116,11 +117,12 @@ class HMC(Sampler):
 
             if not successful_hd:
                 raise RuntimeError("Could not get converged HD")
+
             # calculating full loss:
             final_loss = self.get_full_loss(retdict['final_model'])
+
             # p = min(1, exp(- (H(q*,p*) - H(q,p))))
             #   = min(1, exp(H(q,p) - H(q*,p*)))
-            # ~ print(previous_loss, retdict['initial_kin'], final_loss + retdict['final_kin'])
             prop = torch.exp(((previous_loss + retdict['initial_kin']) -
                               (final_loss + retdict['final_kin'])) / self._temperature)
             r = torch.rand(size=(1,))[0]
@@ -140,10 +142,8 @@ class HMC(Sampler):
                 self.set_model(retdict['final_model'])
                 print("New model accepted after {} attempts".format(iattempt+1))
                 self._L = int(self._L*(1+self._l_adaption_factor))
-                # TODO: increase _L?
                 break
             else:
-                # TODO reduce _L ?
                 self._L = int(self._L*(1-self._l_adaption_factor))
                 print("New model at attempt {} rejected".format(iattempt+1))
         if successful_step:
