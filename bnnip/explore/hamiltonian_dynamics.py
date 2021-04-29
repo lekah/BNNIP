@@ -18,6 +18,7 @@ TEMP_CONTROLS = AttributeDict(
 
 class HamiltonianDynamics(Sampler):
     _step_formatter = '{:>5d} {:.6f} {:.6f} {:.6f} {:.6f}'
+
     def __init__(self, model, mass, dt, gamma=0.0,
                  target_temperature=None, temp_control=None,
                  tau=None,):
@@ -141,5 +142,3 @@ class HamiltonianDynamics(Sampler):
 
     def print_quantities(self,):
         print(self._loss, self._kin, self._loss + self._kin)
-
-

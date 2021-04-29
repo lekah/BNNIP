@@ -19,6 +19,7 @@ class BadIntegrationError(Exception):
 
 class HMC(Sampler):
     _step_formatter = '{:>5d} {:.6f} {:.6f} {:.6f} {:.4e} {:.4e} {:d}'
+
     def __init__(self, model, mass=1.0, start_dt=1e-2, start_L=100,
                  temperature=1.0, hd_batch_size=100,
                  var_tot_threshold=1e-8, stability_criterion=1e-2,
@@ -32,7 +33,6 @@ class HMC(Sampler):
         self._l_adaption_factor = float(l_adaptation_factor)
         super(HMC, self).__init__(model=model, mass=mass,
                                   verbosity=verbosity)
-
 
     def init_mc(self, data):
         if not isinstance(data, AbstractData):
@@ -49,7 +49,7 @@ class HMC(Sampler):
 
     def _check_variances(self, var_loss, var_tot):
         if (var_tot/var_loss > self._stability_criterion and
-            var_tot > self._var_tot_threshold):
+                var_tot > self._var_tot_threshold):
             raise BadIntegrationError("Var loss:{:.4e} Var loss+kin:{:.4e}".format(
                 var_loss, var_tot))
 
@@ -63,7 +63,7 @@ class HMC(Sampler):
         hd.init_dynamics(batch)
         # setting velocities
         retdict['initial_kin'] = hd.set_boltzmann_velocities(
-                    self._temperature)['kin']
+            self._temperature)['kin']
         wf_loss = WelfordMeanM2()
         wf_tot = WelfordMeanM2()
         print_freq = int(nsteps/10)
@@ -134,7 +134,7 @@ class HMC(Sampler):
             #   = min(1, exp((H(q,p) - H(q*,p*))/T))
             prop = torch.exp(((previous_loss + retdict['initial_kin']) -
                               (final_loss + retdict['final_kin'])) /
-                              self._temperature)
+                             self._temperature)
             if self._verbosity:
                 print('!Evaluating model!\n'
                       'Previous loss and kinetic: {}+{}={}\n'

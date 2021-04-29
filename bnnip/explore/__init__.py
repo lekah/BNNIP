@@ -1,5 +1,6 @@
 import os
 
+
 class Sampler(object):
     def __init__(self, model, mass, verbosity=0):
         # TODO: checks
@@ -16,7 +17,6 @@ class Sampler(object):
     def set_model(self, model):
         # TODO:checks
         self._model = model
-
 
     def run(self, nsteps, save_model_freq=None, print_freq=1,
             model_dir=None):
