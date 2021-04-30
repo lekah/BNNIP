@@ -126,6 +126,5 @@ class HamiltonianDynamics(Sampler):
         self._calculate_kinetic_energy_temp()
         return ret_val
 
-
     def print_quantities(self,):
         print(self._loss, self._kin, self._loss + self._kin)

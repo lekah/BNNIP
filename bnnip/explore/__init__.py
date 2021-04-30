@@ -15,6 +15,7 @@ class Sampler(metaclass=ABCMeta):
     @property
     def model(self):
         return self._model
+
     @abstractmethod
     def step(self):
         """
@@ -46,11 +47,11 @@ class Sampler(metaclass=ABCMeta):
             save_models = True
         else:
             save_models = False
-        if filename is not None and save_file_freq>0:
-            save2file=True
+        if filename is not None and save_file_freq > 0:
+            save2file = True
             fil = open(filename, 'a')
         else:
-            save2file=False
+            save2file = False
         for istep in range(starting_step, nsteps+starting_step):
             ret = self.step()
             if istep % print_freq == 0:

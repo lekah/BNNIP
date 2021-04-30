@@ -22,7 +22,7 @@ class HMC(Sampler):
     def __init__(self, model, mass=1.0, start_dt=1e-2, start_L=100,
                  temperature=1.0, hd_batch_size=100,
                  var_tot_threshold=1e-8, stability_criterion=1e-2,
-                 check_freq=1, 
+                 check_freq=1,
                  l_adaptation_factor=0.1, verbosity=0):
         self._dt = float(start_dt)
         self._L = int(start_L)
@@ -145,7 +145,7 @@ class HMC(Sampler):
                           previous_loss + retdict['initial_kin'],
                           final_loss.item(), retdict['final_kin'],
                           final_loss + retdict['final_kin'],
-                          prop.item() if prop<=1 else 1))
+                          prop.item() if prop <= 1 else 1))
             if prop > 1 or prop > torch.rand(size=(1,))[0]:
                 successful_step = True
                 self._full_loss = final_loss
