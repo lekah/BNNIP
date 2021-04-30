@@ -10,7 +10,6 @@ from bnnip.utils import WelfordMeanM2
 DT_REDUCTION = 0.5
 MAX_TRIALS = 5
 MAX_ATTEMPTS = 20
-CHECK_FREQ = 10
 
 
 class BadIntegrationError(Exception):
@@ -23,6 +22,7 @@ class HMC(Sampler):
     def __init__(self, model, mass=1.0, start_dt=1e-2, start_L=100,
                  temperature=1.0, hd_batch_size=100,
                  var_tot_threshold=1e-8, stability_criterion=1e-2,
+                 check_freq=1, 
                  l_adaptation_factor=0.1, verbosity=0):
         self._dt = float(start_dt)
         self._L = int(start_L)
@@ -30,6 +30,7 @@ class HMC(Sampler):
         self._hd_batch_size = int(hd_batch_size)
         self._stability_criterion = float(stability_criterion)
         self._var_tot_threshold = float(var_tot_threshold)
+        self._check_freq = int(check_freq)
         self._l_adaption_factor = float(l_adaptation_factor)
         super(HMC, self).__init__(model=model, mass=mass,
                                   verbosity=verbosity)
@@ -74,14 +75,14 @@ class HMC(Sampler):
                                                                  loss, kin, tot, temp))
             wf_loss.update(loss)
             wf_tot.update(tot)
-            if istep % CHECK_FREQ == 0:
+            if (self._check_freq > 0) and (istep % self._check_freq == 0):
                 mean_loss, var_loss = wf_loss.estimate()
                 mean_tot, var_tot = wf_tot.estimate()
                 self._check_variances(var_loss, var_tot)
         retdict['final_kin'] = hd.get_kinetic_energy()
         retdict['final_model'] = hd.model
-        retdict['var_loss'] = var_loss
-        retdict['var_tot'] = var_tot
+        retdict['var_loss'] = wf_loss.estimate()[1]
+        retdict['var_tot'] = wf_tot.estimate()[1]
         return retdict
 
     def _adapt_dt_L(self, factor):
@@ -137,14 +138,14 @@ class HMC(Sampler):
                              self._temperature)
             if self._verbosity:
                 print('!Evaluating model!\n'
-                      'Previous loss and kinetic: {}+{}={}\n'
-                      'Current loss and kinetic: {}+{}={}\n'
+                      'Previous loss and kinetic: {:.4f} + {:.4f} = {:.4f}\n'
+                      'Current loss and kinetic: {:.4f} + {:.4f} = {:.4f}\n'
                       'propability of acceptance is: {:.3f}'.format(
                           previous_loss.item(), retdict['initial_kin'],
                           previous_loss + retdict['initial_kin'],
                           final_loss.item(), retdict['final_kin'],
                           final_loss + retdict['final_kin'],
-                          prop.item()))
+                          prop.item() if prop<=1 else 1))
             if prop > 1 or prop > torch.rand(size=(1,))[0]:
                 successful_step = True
                 self._full_loss = final_loss
