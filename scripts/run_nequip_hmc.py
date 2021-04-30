@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import copy
 import json
 import os
@@ -25,7 +26,7 @@ DEFAULT_HMC_PARAMS = dict(
     
 
 def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
-        nsteps, freq_save, restart=False, starting_step=1):
+        nsteps, freq_save, restart=False, starting_step=1, seed=None):
 
     if model_dir is None:
         model_dir = '.'
@@ -96,7 +97,8 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
 
     hmc_ = HMC(model=copy.deepcopy(model), **hmc_params)
     hmc_.init_mc(data)
-
+    if seed is not None:
+        torch.random.manual_seed(seed)
     hmc_.run(nsteps, model_dir=model_dir, save_model_freq=freq_save,
             starting_step=1,
             filename=os.path.join(model_dir, 'hmc.out'))
@@ -120,6 +122,7 @@ if __name__ == '__main__':
                         help='start at this step')
     parser.add_argument('-n', '--nsteps', type=int, default=100,
                         help='Run this many HMC steps')
-    parser.add_argument('-d', '--model-dir',  help='save model in this folder')
+    parser.add_argument('-d', '--model-dir',  help='save model in this folder', required=True)
+    parser.add_argument('--seed', type=int, help='initial seed')
     parsed = parser.parse_args()
     main_hmc(**vars(parsed))

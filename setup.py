@@ -9,4 +9,5 @@ setup(
     python_requires=">=3.6",
     packages=find_packages(include=["bnnip", "bnnip.*"]),
     zip_safe=True,
+    scripts=['scripts/run_nequip_hmc.py']
 )

@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 from nequip.data import AtomicDataDict
 from nequip.nn import RescaleOutput
 from nequip.utils import Config
