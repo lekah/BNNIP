@@ -1,4 +1,5 @@
 import os
+import torch
 from abc import ABCMeta, abstractmethod
 
 
@@ -26,7 +27,7 @@ class Sampler(metaclass=ABCMeta):
         self._model = model
 
     def run(self, nsteps, save_model_freq=None, print_freq=1,
-            model_dir=None):
+            model_dir=None, starting_step=1, save_file_freq=1, filename='hmc.out'):
         """
         Runs nsteps steps of the sampler, saving intermediate models to
         model_dir every save_model_freq steps (-1 or None to never save).
@@ -41,18 +42,28 @@ class Sampler(metaclass=ABCMeta):
             if model_dir is None:
                 model_dir = '.'
             os.makedirs(model_dir, exist_ok=True)
-            len_max_step = len(str(nsteps))
+            len_max_step = len(str(nsteps+starting_step))
             save_models = True
         else:
             save_models = False
-        for istep in range(1, nsteps+1):
+        if filename is not None and save_file_freq>0:
+            save2file=True
+            fil = open(filename, 'a')
+        else:
+            save2file=False
+        for istep in range(starting_step, nsteps+starting_step):
             ret = self.step()
             if istep % print_freq == 0:
                 print(self._step_formatter.format(istep, *ret))
+            if save2file and istep % save_file_freq == 0:
+                fil.write(self._step_formatter.format(istep, *ret)+'\n')
+                fil.flush()
             if save_models and (istep % save_model_freq == 0):
                 len_istep = len(str(istep))
                 self.save_model(os.path.join(model_dir or '.', 'model-{}{}.pt'.format(
                     '0'*(len_max_step-len_istep), istep)))
+        if save2file:
+            fil.close()
 
     def get_model(self):
         try:
