@@ -28,7 +28,8 @@ class Sampler(metaclass=ABCMeta):
         self._model = model
 
     def run(self, nsteps, save_model_freq=None, print_freq=1,
-            model_dir=None, starting_step=1, save_file_freq=1, filename='hmc.out'):
+            model_dir=None, starting_step=1, save_file_freq=1,
+            filename='hmc.out'):
         """
         Runs nsteps steps of the sampler, saving intermediate models to
         model_dir every save_model_freq steps (-1 or None to never save).

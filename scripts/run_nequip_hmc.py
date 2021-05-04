@@ -77,7 +77,9 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
         else:
             raise ValueError("model_parameters has to be left to None if restart")
     elif model_parameters is None:
-        raise ValueError("model_parameters cannot be None if not restart")
+        # No model is provided, I will run a training
+        trainer.train()
+        # ~ raise ValueError("model_parameters cannot be None if not restart")
 
 
 
@@ -99,6 +101,11 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
     hmc_.init_mc(data)
     if seed is not None:
         torch.random.manual_seed(seed)
+
+    # Saving the initial model if it wasn't read in the same folder
+    if not restart:
+        hmc_.save_model(os.path.join(model_dir or '.', 'model-init.pt'))
+
     hmc_.run(nsteps, model_dir=model_dir, save_model_freq=freq_save,
             starting_step=1,
             filename=os.path.join(model_dir, 'hmc.out'))
@@ -107,11 +114,17 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument('-m', '--model-parameters',
-                        help='path to saved model parameters')
-    parser.add_argument('-c', '--model-config', required=True,
+    parser.add_argument('model_config',
                         help='path to model configuration (yaml)')
-    parser.add_argument('-p', '--hmc-parameters', required=True)
+    parser.add_argument('hmc_parameters',
+                        help='path to hmc parameters (json)')
+    parser.add_argument('model_dir',  help='save model in this folder')
+    parser.add_argument('nsteps', nargs='?', type=int, default=100,
+                        help='Run this many HMC steps')
+    parser.add_argument('-m', '--model-parameters',
+                        help='path to saved model parameters, optional.\n'
+                        'If not provided and restart, will take last saved model.\n'
+                        'If not provided and not restart, will train')
     parser.add_argument('-r', '--restart', action='store_true',
                         help='Run into restart, will figure which'
                         ' model to load and which starting step to choose'
@@ -120,9 +133,7 @@ if __name__ == '__main__':
                         help='save model every N steps')
     parser.add_argument('-s', '--starting-step', type=int, default=1,
                         help='start at this step')
-    parser.add_argument('-n', '--nsteps', type=int, default=100,
-                        help='Run this many HMC steps')
-    parser.add_argument('-d', '--model-dir',  help='save model in this folder', required=True)
+
     parser.add_argument('--seed', type=int, help='initial seed')
     parsed = parser.parse_args()
     main_hmc(**vars(parsed))
