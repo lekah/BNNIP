@@ -55,7 +55,7 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
     config = Config.from_file(model_config)
 
     if dataset:
-        config.update(dict(dataset=dataset))
+        config.update(dict(dataset_file_name=dataset))
 
     dataset = dataset_from_config(config)
 
