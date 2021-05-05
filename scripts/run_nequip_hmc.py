@@ -122,6 +122,8 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
     if not restart:
         hmc_.save_model(os.path.join(model_dir or '.', 'model-init.pt'))
 
+    if model_dir:
+        os.makedirs(model_dir, exist_ok=True)
     hmc_.run(nsteps, model_dir=model_dir, save_model_freq=freq_save,
             starting_step=1,
             filename=os.path.join(model_dir, 'hmc.out'))

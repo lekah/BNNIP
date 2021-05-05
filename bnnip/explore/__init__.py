@@ -39,11 +39,11 @@ class Sampler(metaclass=ABCMeta):
         # ~ if print_file is None:
         # ~ print_file = 'run.log'
         # ~ with open(print_file, 'a') as f:
+        os.makedirs(model_dir, exist_ok=True)
 
         if save_model_freq is not None and save_model_freq > 0:
             if model_dir is None:
                 model_dir = '.'
-            os.makedirs(model_dir, exist_ok=True)
             len_max_step = len(str(nsteps+starting_step))
             save_models = True
         else:
