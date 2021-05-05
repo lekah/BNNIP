@@ -27,13 +27,16 @@ DEFAULT_HMC_PARAMS = dict(
     
 
 def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
-        nsteps, freq_save, restart=False, starting_step=1, seed=None):
+             nsteps, freq_save,  dataset=None, restart=False, starting_step=1,
+             seed=None
+            ):
 
     print("Start of HMC")
     print("model_dir: {}".format(model_dir))
     print("model_parameters will be read from: {}".format(model_parameters))
     print("model_config will be read from: {}".format(model_config))
     print("hmc_parameters will be read from: {}".format(hmc_parameters))
+    print("dataset is: {}".format(dataset))
     print("nsteps: {}".format(nsteps))
     print("freq_save: {}".format(freq_save))
     print("restart: {}".format(restart))
@@ -50,6 +53,10 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
         hmc_params.update(update_parameters)
 
     config = Config.from_file(model_config)
+
+    if dataset:
+        config.update(dict(dataset=dataset))
+
     dataset = dataset_from_config(config)
 
     trainer = Trainer(model=None, **dict(config))
@@ -137,6 +144,7 @@ if __name__ == '__main__':
     parser.add_argument('hmc_parameters',
                         help='path to hmc parameters (json)')
     parser.add_argument('model_dir',  help='save model in this folder')
+    parser.add_argument('dataset',  help='use this dataset')
     parser.add_argument('nsteps', nargs='?', type=int, default=100,
                         help='Run this many HMC steps')
     parser.add_argument('-m', '--model-parameters',
