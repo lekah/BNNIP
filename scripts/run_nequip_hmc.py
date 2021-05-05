@@ -143,9 +143,9 @@ if __name__ == '__main__':
                         help='path to model configuration (yaml)')
     parser.add_argument('hmc_parameters',
                         help='path to hmc parameters (json)')
-    parser.add_argument('model_dir',  help='save model in this folder')
-    parser.add_argument('dataset',  help='use this dataset')
-    parser.add_argument('nsteps', nargs='?', type=int, default=100,
+    parser.add_argument('model_dir',  help='save models  in this folder')
+    parser.add_argument('-d', '--dataset',  help='use this dataset')
+    parser.add_argument('-n', '--nsteps', type=int, default=100,
                         help='Run this many HMC steps')
     parser.add_argument('-m', '--model-parameters',
                         help='path to saved model parameters, optional.\n'
