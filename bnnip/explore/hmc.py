@@ -130,8 +130,8 @@ class HMC(Sampler):
                           "{:.2e}".format(e, dt, self._dt_reduction*dt))
                     #self._adapt_dt_L(self._dt_reduction) # Changing globally
                     #changing for this attemp
-                    dt = factor*self._dt
-                    L = int(L / factor)
+                    dt = self._dt_reduction*dt
+                    L = int(L / self._dt_reduction)
                     continue
                 except ZeroDivisionError as e:
                     print("Non recoverable ZeroDivisionError, loss"
