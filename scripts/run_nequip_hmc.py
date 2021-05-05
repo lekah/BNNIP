@@ -29,6 +29,16 @@ DEFAULT_HMC_PARAMS = dict(
 def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
         nsteps, freq_save, restart=False, starting_step=1, seed=None):
 
+    print("Start of HMC")
+    print("model_dir: {}".format(model_dir))
+    print("model_parameters will be read from: {}".format(model_parameters))
+    print("model_config will be read from: {}".format(model_config))
+    print("hmc_parameters will be read from: {}".format(hmc_parameters))
+    print("nsteps: {}".format(nsteps))
+    print("freq_save: {}".format(freq_save))
+    print("restart: {}".format(restart))
+    print("starting_step: {}".format(starting_step))
+    print("seed: {}".format(seed))
     if model_dir is None:
         model_dir = '.'
     hmc_params = copy.deepcopy(DEFAULT_HMC_PARAMS)
@@ -77,17 +87,22 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
                   "with starting_idx {}\n".format(model_parameters, starting_step))
         else:
             raise ValueError("model_parameters has to be left to None if restart")
-    elif model_parameters is None:
+
+
+    if model_parameters is None:
         # No model is provided, I will run a training
+        print("Training model")
+        trainer.model = core_model
         trainer.train()
         # ~ raise ValueError("model_parameters cannot be None if not restart")
+    else:
+        print("Loading model from {}".format(model_parameters))
 
 
-
-    saved_state_dict = torch.load(model_parameters)
-    core_model.load_state_dict(saved_state_dict)
-    trainer.model = core_model
-    trainer.init()
+        saved_state_dict = torch.load(model_parameters)
+        core_model.load_state_dict(saved_state_dict)
+        trainer.model = core_model
+        trainer.init()
 
     # Creating the dataset:
     data = NequipData(dataset)

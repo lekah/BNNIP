@@ -55,10 +55,10 @@ class HMC(Sampler):
             raise BadIntegrationError("Var loss:{:.4e} Var loss+kin:{:.4e}".format(
                 var_loss, var_tot))
 
-    def _perform_run(self, nsteps):
+    def _perform_run(self, nsteps, dt):
         retdict = {}
         hd = HamiltonianDynamics(copy.deepcopy(self._model), self._mass,
-                                 dt=self._dt, target_temperature=None,
+                                 dt=dt, target_temperature=None,
                                  temp_control=None,)
         # Setting the batch as a stochastic choice
         batch = self._data.get_rand_batch(self._hd_batch_size)
@@ -111,6 +111,9 @@ class HMC(Sampler):
         # an attempt is a successful HD run, successful if configuration
         # is accept
         successful_step = False
+        # Copying L and dt to local variable that can be adapted
+        L = self._L
+        dt = self._dt 
         for iattempt in range(MAX_ATTEMPTS):
             # A trial is a tried HD run, which can be interrupted
             # due to bad integration or other problems
@@ -118,14 +121,17 @@ class HMC(Sampler):
                 try:
                     # retdict containts starting kinetic energy, final kinetic
                     # energy and the final model
-                    retdict = self._perform_run(self._L)
+                    retdict = self._perform_run(L, dt)
                     successful_hd = True
                     break
                 except BadIntegrationError as e:
                     print("Caught BadIntegrationError: {}\n"
                           "Reducing dt {:.2e} -> "
-                          "{:.2e}".format(e, self._dt, self._dt_reduction*self._dt))
-                    self._adapt_dt_L(self._dt_reduction)
+                          "{:.2e}".format(e, dt, self._dt_reduction*dt))
+                    #self._adapt_dt_L(self._dt_reduction) # Changing globally
+                    #changing for this attemp
+                    dt = factor*self._dt
+                    L = int(L / factor)
                     continue
                 except ZeroDivisionError as e:
                     print("Non recoverable ZeroDivisionError, loss"
