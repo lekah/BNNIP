@@ -1,5 +1,6 @@
 
 import copy
+import numpy as np
 import torch
 from bnnip.explore import Sampler
 from bnnip.explore.hamiltonian_dynamics import HamiltonianDynamics
@@ -7,7 +8,6 @@ from bnnip.model import AbstractData
 from bnnip.utils import WelfordMeanM2
 
 
-DT_REDUCTION = 0.5
 MAX_TRIALS = 5
 MAX_ATTEMPTS = 20
 
@@ -22,7 +22,7 @@ class HMC(Sampler):
     def __init__(self, model, mass=1.0, start_dt=1e-2, start_L=100,
                  temperature=1.0, hd_batch_size=100,
                  var_tot_threshold=1e-8, stability_criterion=1e-2,
-                 check_freq=1,
+                 check_freq=1, dt_reduction=0.5,
                  l_adaptation_factor=0.1, verbosity=0):
         self._dt = float(start_dt)
         self._L = int(start_L)
@@ -32,6 +32,7 @@ class HMC(Sampler):
         self._var_tot_threshold = float(var_tot_threshold)
         self._check_freq = int(check_freq)
         self._l_adaption_factor = float(l_adaptation_factor)
+        self._dt_reduction = float(dt_reduction)
         super(HMC, self).__init__(model=model, mass=mass,
                                   verbosity=verbosity)
 
@@ -76,6 +77,10 @@ class HMC(Sampler):
             wf_loss.update(loss)
             wf_tot.update(tot)
             if (self._check_freq > 0) and (istep % self._check_freq == 0):
+                if np.isnan([loss, kin, tot, temp]).any():
+                    raise BadIntegrationError("loss:{} kin:{} tot:{} temp:{}".format(
+                                        loss, kin, tot, temp))
+
                 mean_loss, var_loss = wf_loss.estimate()
                 mean_tot, var_tot = wf_tot.estimate()
                 self._check_variances(var_loss, var_tot)
@@ -86,6 +91,8 @@ class HMC(Sampler):
         return retdict
 
     def _adapt_dt_L(self, factor):
+        if factor ==1.0:
+            return
         self._dt = factor*self._dt
         # also changing length of trajectory to compensate changed timestep
         self._L = int(self._L / factor)
@@ -117,8 +124,8 @@ class HMC(Sampler):
                 except BadIntegrationError as e:
                     print("Caught BadIntegrationError: {}\n"
                           "Reducing dt {:.2e} -> "
-                          "{:.2e}".format(e, self._dt, DT_REDUCTION*self._dt))
-                    self._adapt_dt_L(DT_REDUCTION)
+                          "{:.2e}".format(e, self._dt, self._dt_reduction*self._dt))
+                    self._adapt_dt_L(self._dt_reduction)
                     continue
                 except ZeroDivisionError as e:
                     print("Non recoverable ZeroDivisionError, loss"

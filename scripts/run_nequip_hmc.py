@@ -22,6 +22,7 @@ DEFAULT_HMC_PARAMS = dict(
     var_tot_threshold=1e-6, stability_criterion=1e-2,
     check_freq=-1,
     l_adaptation_factor=0.0, hd_batch_size=25,
+    dt_reduction=0.5,
     verbosity=2)
     
 
