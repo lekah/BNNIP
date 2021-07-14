@@ -67,14 +67,14 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
          AtomicDataDict.ATOMIC_NUMBERS_KEY, ],
         modes=["rms", "mean_std", "count"],)
 
-    energy_model = EnergyModel(**dict(config))
-    force_model = ForceModel(energy_model)
+    #energy_model = EnergyModel(**dict(config))
+    #force_model = ForceModel(energy_model)
+    force_model = ForceModel(**dict(config))
     core_model = RescaleOutput(
         model=force_model, scale_keys=[AtomicDataDict.FORCE_KEY,
                                        AtomicDataDict.TOTAL_ENERGY_KEY, ],
         scale_by=forces_std, shift_keys=AtomicDataDict.TOTAL_ENERGY_KEY,
         shift_by=energies_mean,)
-
     # core_model = force_model
     if restart:
         if model_parameters is None:
@@ -120,7 +120,8 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
     for k, v in hmc_params.items():
         print('{:<20}  {}'.format(k,v))
 
-    hmc_ = HMC(model=copy.deepcopy(model), **hmc_params)
+    hmc_ = HMC(model=model, #copy.deepcopy(model), No need t deepcopy, model either trained OTF or loaded frmo file
+               **hmc_params)
     hmc_.init_mc(data)
     if seed is not None:
         torch.random.manual_seed(seed)
@@ -132,7 +133,7 @@ def main_hmc(model_dir, model_parameters, model_config, hmc_parameters,
         hmc_.save_model(os.path.join(model_dir or '.', 'model-init.pt'))
 
     hmc_.run(nsteps, model_dir=model_dir, save_model_freq=freq_save,
-            starting_step=1,
+            starting_step=starting_step,
             filename=os.path.join(model_dir, 'hmc.out'))
 
 

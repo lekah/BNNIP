@@ -8,7 +8,7 @@ from bnnip.model import AbstractData
 from bnnip.utils import WelfordMeanM2
 
 
-MAX_TRIALS = 5
+MAX_TRIALS = 15
 MAX_ATTEMPTS = 20
 
 
