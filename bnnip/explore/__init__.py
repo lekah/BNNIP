@@ -35,10 +35,6 @@ class Sampler(metaclass=ABCMeta):
         model_dir every save_model_freq steps (-1 or None to never save).
         Prints every print_freq sampled properties.
         """
-
-        # ~ if print_file is None:
-        # ~ print_file = 'run.log'
-        # ~ with open(print_file, 'a') as f:
         os.makedirs(model_dir, exist_ok=True)
 
         if save_model_freq is not None and save_model_freq > 0:
