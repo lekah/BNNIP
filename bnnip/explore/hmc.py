@@ -76,7 +76,7 @@ class HMC(Sampler):
                                                                  loss, kin, tot, temp))
             wf_loss.update(loss)
             wf_tot.update(tot)
-            if (self._check_freq > 0) and (istep % self._check_freq == 0):
+            if (self._check_freq > 0) and (istep % self._check_freq == 0) and (istep > 1):
                 if np.isnan([loss, kin, tot, temp]).any():
                     raise BadIntegrationError("loss:{} kin:{} tot:{} temp:{}".format(
                                         loss, kin, tot, temp))
